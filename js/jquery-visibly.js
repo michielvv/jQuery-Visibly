@@ -67,7 +67,11 @@
 							$.each(rv.split(s.fdelim), function(k, v) {
 								//Cache the element
 								var elem = $('#' + v.split(split)[0]);
-								if (elem.length == 0) elem = $("INPUT[name='" + v.split(split)[0] + "']:checked");
+								if (elem.length == 0 || ! elem.is('input,select,textarea')) elem = $("INPUT[name='" + v.split(split)[0] + "']:checked");
+
+                                                                console.log('elem');
+                                                                console.log(elem);
+
 								//Does the element exist?
 								if (elem.val() != undefined) {
 									//Cache the value, plus workaround for issue with .val on select boxes with hidden items
@@ -77,10 +81,18 @@
 											if ($(this).parent().is("select")) val = $(this).rVal();
 										});
 									}
-                                    else if (elem.is('input[type="checkbox"]')){
-                                        val = elem.is(':checked') ? elem.val() : ''
-                                    }
-                                    else val = elem.val();
+                                                else if (elem.is('input[type="checkbox"]') || elem.is('input[type="radio"]')){
+                                                    console.log('CHECKED?');
+                                                    val = elem.is(':checked') ? elem.val() : '';
+                                                    console.log(elem);
+                                                    console.log(val);
+                                                }
+                                                else{
+                                                    val = elem.val();
+                                                    console.log('OTHER');
+                                                    console.log(elem);
+                                                    console.log(val);
+                                                }
 									//If the rule doesn't match, hide control
 									if (v.split(s.edelim)[1] != null)
 									//work around for .val not working correctly
