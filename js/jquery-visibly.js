@@ -9,7 +9,14 @@
  * http://www.opensource.org/licenses/mit-license.php
  * http://www.gnu.org/licenses/gpl-3.0.html
  *
+ * Changes made by Pedro Serra:
+ *  - Added callbacks for show/hide changes
+ *  - Added support for checkboxes
+ *  - Added invert option
+ *
  */
+
+
 //rVal gets rounds issue with hidden items in drop down being selected
 (function($) {
 	$.fn.rVal = function(content) {
@@ -26,7 +33,7 @@
 ;
 (function($) {
 	$.fn.Visibly = function(o) {
-		//settings and defaults		 
+		//settings and defaults
 		var s = $.extend({
 			clearOnHide: false, //Clear the value from the elements on hide
 			attr: 'visibly', //attr attribute to use for the visibly attr
@@ -35,7 +42,10 @@
 			nedelim: '!', //Not Equal delimiter between the field ID and the values
 			regularExpression: false, //Use Regular expression for the test
 			fdelim: ';', //Delimiter between the fields
-			rdelim: '%' //Delimiter between rules
+			rdelim: '%', //Delimiter between rules
+            onShow: function (){},
+            onHide: function (){},
+            invert: false
 		}, o);
 		var runitems = [];
 
@@ -43,7 +53,7 @@
 			var c = $(this);
 			var split = RegExp(s.edelim + "|" + s.nedelim);
 			//loop through all controls related to the field to create events
-			$.each($(this).attr(s.attr).split(s.fdelim), function(k, v2) {
+			$.each($(this).attr(s.attr).split(RegExp(s.fdelim+"|"+s.rdelim)), function(k, v2) {
 				//Bind keyup and change events, keyup is used because if the next tab item is made visible it would not be tabbed to using change or blur
 				var vis = $('#' + v2.split(split)[0]);
 
@@ -66,10 +76,14 @@
 										elem.find('option:selected').each(function() {
 											if ($(this).parent().is("select")) val = $(this).rVal();
 										});
-									} else val = elem.val();
+									}
+                                    else if (elem.is('input[type="checkbox"]')){
+                                        val = elem.is(':checked') ? elem.val() : ''
+                                    }
+                                    else val = elem.val();
 									//If the rule doesn't match, hide control
 									if (v.split(s.edelim)[1] != null)
-									//work around for .val not working correctly 
+									//work around for .val not working correctly
 										var grep = $.grep(v.split(s.edelim)[1].split(s.vdelim), function(n, i) {
 										if ($.inArray(val, v.split(s.edelim)[1].split(s.vdelim)) != -1)
 											return true;
@@ -86,14 +100,16 @@
 									if (grep.length == 0) visible = false;
 								} else visible = false
 							});
+                            if (s.invert) visible = !visible;
 							return !visible;
 						});
-						//Set visibilty
+						//Set visibility
 						//setting individual items on drop down doesn't work cross browser, check to see if option and wrap in hidden span
 						if (visible) {
 							if (c.is("option")) {
 								if (c.parent('span.hide').length) c.unwrap();
 							} else c.show()
+                            s.onShow();
 						} else {
 							if (c.is("option")) {
 								if (c.parent('span.hide').length == 0) {
@@ -103,6 +119,7 @@
 									c.wrap('<span class="hide" style="display: none;" />');
 								};
 							} else c.hide()
+                            s.onHide();
 						};
 						//Clear the element and child elements if ClearOnHide is set
 						if ((!visible) && (s.clearOnHide)) {
